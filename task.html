@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management Application</title>
+    <style>
+        /* Your CSS styles here */
+        /* Reset default styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        section {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        textarea,
+        input[type="date"],
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .task {
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .task h3 {
+            margin-bottom: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            border-radius: 5px;
+        }
+
+        .modal-content button {
+            background-color: #f44336;
+            color: #fff;
+        }
+
+        .modal-content button:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Task Management Application</h1>
+        </header>
+        <main>
+            <!-- Task List -->
+            <section id="task-list">
+                <!-- Tasks will be dynamically populated here -->
+            </section>
+            <!-- Add Task Form -->
+            <section id="add-task-form">
+                <h2>Add New Task</h2>
+                <input type="text" id="title" placeholder="Title">
+                <textarea id="description" placeholder="Description"></textarea>
+                <input type="date" id="due-date">
+                <button onclick="addTask()">Add Task</button>
+            </section>
+            <!-- Edit Task Form -->
+            <section id="edit-task-form" style="display: none;">
+                <h2>Edit Task</h2>
+                <input type="text" id="edit-title" placeholder="Title">
+                <textarea id="edit-description" placeholder="Description"></textarea>
+                <input type="date" id="edit-due-date">
+                <button onclick="saveEditedTask()">Save Changes</button>
+            </section>
+            <!-- Task Details Modal -->
+            <div id="task-details-modal" class="modal">
+                <!-- Modal content will be dynamically populated here -->
+            </div>
+        </main>
+    </div>
+    <script>
+        // JavaScript code here
+
+        // Array to store tasks data
+        let tasks = [];
+
+        // Function to generate a unique ID for tasks
+        function generateTaskId() {
+            return '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Function to delete a task
+        function deleteTask(taskId) {
+            tasks = tasks.filter(task => task.id !== taskId);
+            displayTasks();
+            closeTaskDetails(); // Close modal if open
+        }
+
+        // Function to display tasks in the UI
+        function displayTasks() {
+            const taskListSection = document.getElementById('task-list');
+            taskListSection.innerHTML = ''; // Clear existing tasks
+            tasks.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.classList.add('task');
+                taskElement.innerHTML = `
+                    <h3>${task.title}</h3>
+                    <p>${task.description}</p>
+                    <p>Due Date: ${task.due_date}</p>
+                    <button onclick="openTaskDetails('${task.id}')">View Details</button>
+                    <button onclick="deleteTask('${task.id}')">Delete</button>
+                `;
+                taskListSection.appendChild(taskElement);
+            });
+        }
+
+        // Function to add a new task
+        function addTask() {
+            const titleInput = document.getElementById('title');
+            const descriptionInput = document.getElementById('description');
+            const dueDateInput = document.getElementById('due-date');
+            const title = titleInput.value.trim();
+            const description = descriptionInput.value.trim();
+            const dueDate = dueDateInput.value;
+            if (title === '' || description === '' || dueDate === '') {
+                alert('Please fill in all fields');
+                return;
+            }
+            const taskId = generateTaskId();
+            tasks.push({ id: taskId, title, description, due_date: dueDate });
+            displayTasks();
+            titleInput.value = '';
+            descriptionInput.value = '';
+            dueDateInput.value = '';
+        }
+
+        // Function to open edit task form
+        function openEditForm() {
+            const task = tasks.find(t => t.id === selectedTaskId);
+            document.getElementById('edit-title').value = task.title;
+            document.getElementById('edit-description').value = task.description;
+            document.getElementById('edit-due-date').value = task.due_date;
+            document.getElementById('edit-task-form').style.display = 'block';
+            document.getElementById('task-details-modal').style.display = 'none';
+        }
+
+        // Function to save edited task
+        function saveEditedTask() {
+            const titleInput = document.getElementById('edit-title');
+            const descriptionInput = document.getElementById('edit-description');
+            const dueDateInput = document.getElementById('edit-due-date');
+            const title = titleInput.value.trim();
+            const description = descriptionInput.value.trim();
+            const dueDate = dueDateInput.value;
+            if (title === '' || description === '' || dueDate === '') {
+                alert('Please fill in all fields');
+                return;
+            }
+            const editedTask = {
+                id: selectedTaskId,
+                title,
+                description,
+                due_date: dueDate
+            };
+            const index = tasks.findIndex(task => task.id === selectedTaskId);
+            tasks[index] = editedTask;
+            displayTasks();
+            closeTaskDetails();
+            document.getElementById('edit-task-form').style.display = 'none';
+        }
+
+        // Variable to store the ID of the selected task for editing
+        let selectedTaskId = null;
+
+        // Function to open task details modal and set selectedTaskId
+        function openTaskDetails(taskId) {
+            selectedTaskId = taskId;
+            const task = tasks.find(t => t.id === taskId);
+            const modal = document.getElementById('task-details-modal');
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h2 id="modal-title">${task.title}</h2>
+                    <p id="modal-description">${task.description}</p>
+                    <p id="modal-due-date">Due Date: ${task.due_date}</p>
+                    <button onclick="closeTaskDetails()">Close</button>
+                    <button onclick="openEditForm()">Edit</button>
+                </div>
+            `;
+            modal.style.display = 'block';
+        }
+
+        // Function to close task details modal
+        function closeTaskDetails() {
+            const modal = document.getElementById('task-details-modal');
+            modal.style.display = 'none';
+        }
+
+        // Initial display of tasks
+        displayTasks();
+    </script>
+</body>
+</html>
